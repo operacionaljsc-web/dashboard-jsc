@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Painel executivo do rollout TIM JSC">
+  <title>JSC | Dashboard por projeto e UF</title>
+  <style>
+    :root {
+      --navy: #071b33;
+      --navy-2: #0b2748;
+      --blue: #0066ff;
+      --cyan: #11bce2;
+      --green: #10b981;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --ink: #12243a;
+      --muted: #66788f;
+      --line: #dfe7f0;
+      --surface: #ffffff;
+      --canvas: #f3f7fb;
+      --shadow: 0 16px 36px rgba(7, 27, 51, .08);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button, select { font: inherit; }
+
+    .topbar {
+      position: relative;
+      overflow: hidden;
+      color: white;
+      background: linear-gradient(125deg, var(--navy) 0%, #092c56 65%, #064aa5 100%);
+    }
+    .topbar::after {
+      content: "";
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      right: -140px;
+      top: -250px;
+      border: 68px solid rgba(17, 188, 226, .18);
+      border-radius: 50%;
+    }
+    .topbar-inner, .page { width: min(1440px, calc(100% - 40px)); margin: auto; }
+    .topbar-inner {
+      min-height: 182px;
+      padding: 28px 0 34px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 28px;
+      position: relative;
+      z-index: 1;
+    }
+    .eyebrow {
+      margin: 0 0 12px;
+      color: #88ddf2;
+      font-size: .74rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.05; letter-spacing: -.045em; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 16px;
+      background: rgba(255,255,255,.08);
+      backdrop-filter: blur(8px);
+      white-space: nowrap;
+    }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, #2bd4ee, #0066ff);
+      font-weight: 900;
+    }
+    .brand strong, .brand small { display: block; }
+    .brand small { margin-top: 2px; color: #b9cce1; font-size: .68rem; }
+
+    .page { padding-bottom: 44px; }
+    .filters {
+      position: relative;
+      z-index: 2;
+      margin-top: -30px;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(140px, 1fr)) auto;
+      gap: 14px;
+      align-items: end;
+      background: var(--surface);
+      border: 1px solid rgba(223, 231, 240, .9);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    select, .reset {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: #f9fbfd;
+      color: var(--ink);
+      padding: 0 12px;
+      outline: none;
+    }
+    select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,102,255,.1); }
+    .reset {
+      min-width: 112px;
+      cursor: pointer;
+      background: var(--navy);
+      border-color: var(--navy);
+      color: white;
+      font-weight: 750;
+    }
+    .reset:hover { background: var(--navy-2); }
+
+    .meta-row {
+      margin: 22px 2px 12px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 18px;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+    .live-dot { display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; background: var(--green); }
+    .result-count { font-weight: 750; color: var(--ink); }
+
+    .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 7px 22px rgba(7, 27, 51, .045);
+    }
+    .kpi { min-height: 118px; padding: 18px; position: relative; overflow: hidden; }
+    .kpi::after { content: ""; position: absolute; width: 31px; height: 31px; right: -12px; bottom: -14px; border-radius: 50%; background: var(--accent-soft); }
+    .kpi-label { color: var(--muted); font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .055em; }
+    .kpi-head { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+    .kpi-total { color: #071b33; font-size: 1.08rem; font-weight: 900; }
+    .kpi-value { margin-top: 5px; font-size: clamp(1.65rem, 3vw, 2.25rem); line-height: 1; font-weight: 850; letter-spacing: -.045em; }
+    .kpi-detail { margin-top: 9px; color: var(--muted); font-size: .73rem; }
+    .state-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 5px 10px;
+      margin-top: 8px;
+      font-size: .78rem;
+      line-height: 1.15;
+    }
+    .state-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      padding-bottom: 3px;
+      border-bottom: 1px solid #edf1f6;
+      font-weight: 750;
+    }
+    .state-item strong { color: var(--blue); }
+    .metric-list {
+      display: grid;
+      gap: 3px;
+      margin-top: 8px;
+      font-size: .67rem;
+      line-height: 1.15;
+    }
+    .metric-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 7px;
+      padding: 2px 0 4px;
+      border-bottom: 1px solid #edf1f6;
+    }
+    .metric-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .metric-item strong { flex: 0 0 auto; color: var(--blue); font-size: .75rem; }
+
+    .grid-main { display: grid; grid-template-columns: 1.12fr .88fr; gap: 16px; margin-top: 16px; }
+    .panel { padding: 22px; min-height: 360px; }
+    .panel-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 23px; }
+    .panel h2 { margin: 0; font-size: 1rem; }
+    .panel-note { margin: 5px 0 0; color: var(--muted); font-size: .76rem; }
+    .badge { padding: 6px 9px; border-radius: 999px; background: #edf4ff; color: var(--blue); font-size: .68rem; font-weight: 800; white-space: nowrap; }
+
+    .bars { display: grid; gap: 15px; }
+    .bar-line { display: grid; grid-template-columns: minmax(105px, 175px) 1fr 52px; align-items: center; gap: 11px; }
+    .bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #30465f; font-size: .8rem; font-weight: 700; }
+    .bar-track { height: 10px; overflow: hidden; border-radius: 999px; background: #edf2f7; }
+    .bar-fill { height: 100%; min-width: 2px; border-radius: inherit; background: linear-gradient(90deg, var(--blue), var(--cyan)); transition: width .35s ease; }
+    .bar-value { text-align: right; color: var(--ink); font-size: .78rem; font-weight: 800; }
+    .empty { padding: 70px 12px; color: var(--muted); text-align: center; }
+
+    .stages { display: grid; gap: 15px; }
+    .stage { padding: 15px; border-radius: 13px; background: #f8fafc; border: 1px solid #e8eef5; }
+    .stage-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+    .stage-name { font-size: .82rem; font-weight: 780; }
+    .stage-count { font-size: 1.15rem; font-weight: 850; }
+    .stage-progress { height: 7px; margin-top: 10px; overflow: hidden; border-radius: 999px; background: #e7edf4; }
+    .stage-progress span { display: block; height: 100%; border-radius: inherit; background: var(--stage-color); }
+    .stage-foot { margin-top: 7px; color: var(--muted); font-size: .69rem; }
+
+    .grid-lower { display: grid; grid-template-columns: .83fr 1.17fr; gap: 16px; margin-top: 16px; }
+    .table-card { overflow: hidden; }
+    .table-head { padding: 20px 22px 13px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .79rem; }
+    th { padding: 10px 16px; background: #f7f9fc; color: var(--muted); text-align: left; font-size: .67rem; letter-spacing: .055em; text-transform: uppercase; }
+    td { padding: 12px 16px; border-top: 1px solid #edf1f6; }
+    th:not(:first-child), td:not(:first-child) { text-align: right; }
+    tbody tr:hover { background: #fafcff; }
+    .region-name { font-weight: 800; }
+    .share { color: var(--muted); }
+
+    .detail-card { margin-top: 16px; overflow: hidden; }
+    .detail-head { padding: 18px 20px 12px; align-items: center; margin-bottom: 0; }
+    .detail-wrap { max-height: 430px; overflow: auto; border-top: 1px solid #e7edf4; }
+    .detail-table { min-width: 1640px; font-size: .74rem; }
+    .detail-table th { position: sticky; top: 0; z-index: 1; padding: 10px 12px; background: #eef2f7; color: #42566f; }
+    .detail-table td { padding: 9px 12px; color: #263c55; }
+    .detail-table th, .detail-table td { text-align: left !important; white-space: nowrap; }
+    .detail-table tbody tr:nth-child(even) { background: #f9fbfd; }
+
+    .privacy {
+      margin-top: 16px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #cfe2f8;
+      border-radius: 14px;
+      background: #eef7ff;
+      color: #31526f;
+      font-size: .78rem;
+    }
+    .privacy strong { color: #123959; }
+    footer { padding: 25px 0 0; color: #7c8ba0; text-align: center; font-size: .72rem; }
+
+    @media (max-width: 1120px) {
+      .filters { grid-template-columns: repeat(2, 1fr); }
+      .reset { min-width: 0; }
+      .kpis { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 780px) {
+      .topbar-inner { min-height: 220px; flex-direction: column; }
+      .brand { align-self: flex-start; }
+      .grid-main, .grid-lower { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .topbar-inner, .page { width: min(100% - 24px, 1440px); }
+      .filters { grid-template-columns: 1fr; padding: 16px; }
+      .kpis { grid-template-columns: 1fr; }
+      .kpi { min-height: 108px; padding: 16px; }
+      .meta-row { align-items: flex-start; flex-direction: column; gap: 5px; }
+      .bar-line { grid-template-columns: 95px 1fr 42px; }
+      .panel { padding: 18px 16px; }
+    }
+  .filters {grid-template-columns: 1.4fr 1fr auto; align-items:start;}
+.filter-buttons {display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.filter-buttons button {padding:10px 16px;border:1px solid #bfd0e5;border-radius:8px;background:white;color:#183b60;cursor:pointer;min-height:44px;font-size:14px;}
+.filter-buttons button[aria-pressed="true"] {background:#0066ff;border-color:#0066ff;color:white;}
+button:focus-visible {outline:3px solid #11bce2;outline-offset:3px;}
+[hidden] {display:none!important;}
+label, .kpi-label, .panel-note, table, .detail-table, th, .detail-table th, .stage-name, .bar-label, .bar-value, .metric-item, .state-item {font-size:14px;}
+.topbar-inner {min-height:140px;}
+@media(max-width:780px){.filters{grid-template-columns:1fr}.topbar-inner{min-height:170px}}
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <p class="eyebrow">Gestão de implantação</p>
+        <h1>Rollout JSC</h1>
+      </div>
+      <div class="brand" aria-label="JSC Telecom">
+        <div class="brand-mark">JSC</div>
+        <div><strong>Painel operacional</strong><small>Rollout nacional</small></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="filters" aria-label="Filtros do painel">
+      <div class="field"><label for="projectFilter">Projeto · coluna B</label><select id="projectFilter" hidden><option value="">Todos</option></select><div id="projectButtons" class="filter-buttons" role="group" aria-label="Projetos"></div></div>
+      
+      <div class="field"><label for="stateFilter">UF · coluna D</label><select id="stateFilter" hidden><option value="">Todas</option></select><div id="stateButtons" class="filter-buttons" role="group" aria-label="Estados"></div></div>
+      
+      <button class="reset" id="resetFilters" type="button">Limpar filtros</button>
+    </section>
+
+    <div class="meta-row"><span class="result-count" id="resultCount" aria-live="polite">— registros</span><span id="sourceDate"></span></div>
+
+    <section class="kpis" aria-label="Indicadores principais">
+      <article class="card kpi" style="--accent:#2563eb;--accent-soft:#e8f1ff"><div class="kpi-head"><div class="kpi-label">Registros JSC</div><strong class="kpi-total" id="kpiSitesTotal">—</strong></div><div class="metric-list" id="kpiSiteStages">—</div></article>
+      <article class="card kpi" style="--accent:#7c3aed;--accent-soft:#f0eaff"><div class="kpi-head"><div class="kpi-label">Estados</div><strong class="kpi-total" id="kpiStatesTotal">—</strong></div><div class="state-list" id="kpiStates">—</div></article>
+      <article class="card kpi" style="--accent:#0ea5e9;--accent-soft:#e5f7ff"><div class="kpi-head"><div class="kpi-label">TSSR</div><strong class="kpi-total" id="kpiTssrTotal">—</strong></div><div class="metric-list" id="kpiTssr">—</div></article>
+      <article class="card kpi" style="--accent:#10b981;--accent-soft:#e6f9f2"><div class="kpi-head"><div class="kpi-label">SMR</div><strong class="kpi-total" id="kpiSmrTotal">—</strong></div><div class="metric-list" id="kpiSmr">—</div></article>
+    </section>
+
+    <section class="card detail-card" aria-label="Planilha detalhada">
+      <div class="detail-head panel-head"><div><h2>Planilha detalhada</h2><p class="panel-note">Registros da aba Manual conforme os filtros selecionados</p></div><span class="badge" id="detailCount">0 linhas</span></div>
+      <div class="detail-wrap">
+        <table class="detail-table">
+          <thead><tr><th>OC Site</th><th>Projeto</th><th>Reg</th><th>Site ID</th><th>Tipo Site</th><th>Frequência</th><th>TSSR</th><th>SMR</th><th>Tipo Casa</th><th>RFI</th><th>Faturamento</th><th>Parceiro</th><th>Prev MOS</th><th>Agend MOS</th></tr></thead>
+          <tbody id="detailTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="grid-main">
+      <article class="card panel">
+        <div class="panel-head"><div><h2>Carteira por projeto</h2><p class="panel-note">Distribuição dos registros após os filtros</p></div><span class="badge" id="projectBadge">0 categorias</span></div>
+        <div class="bars" id="projectBars"></div>
+      </article>
+      <article class="card panel">
+        <div class="panel-head"><div><h2>Avanço operacional</h2><p class="panel-note">Marcos preenchidos na base selecionada</p></div><span class="badge">Visão de funil</span></div>
+        <div class="stages" id="stageList"></div>
+      </article>
+    </section>
+
+    <section class="grid-lower">
+      <article class="card panel">
+        <div class="panel-head"><div><h2>Top UFs</h2><p class="panel-note">Concentração geográfica da carteira</p></div><span class="badge">Top 8</span></div>
+        <div class="bars" id="stateBars"></div>
+      </article>
+      <article class="card table-card">
+        <div class="table-head panel-head"><div><h2>Resumo por regional</h2><p class="panel-note">Volume, participação e principais frentes</p></div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Regional</th><th>Sites</th><th>Participação</th><th>5G</th><th>Swap</th><th>4G</th></tr></thead>
+            <tbody id="regionTable"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+
+    <aside class="privacy"><span aria-hidden="true">🔒</span><span><strong>Detalhamento operacional:</strong> a tabela exibe somente as colunas solicitadas e acompanha os filtros do painel.</span></aside>
+    <footer>JSC Telecom · Painel de acompanhamento do rollout TIM</footer>
+  </main>
+
+  <script src="dashboard-data.js"></script>
+  <script>
+    (() => {
+      const payload = window.DASHBOARD_DATA || { records: [], updatedAt: "", source: "" };
+      const allRows = Array.isArray(payload.records) ? payload.records.filter(row => String(row.s || "").toUpperCase().includes("JSC")) : [];
+      const localeNumber = new Intl.NumberFormat("pt-BR");
+      const $ = (id) => document.getElementById(id);
+      const filters = {
+        p: $("projectFilter"),
+        
+        u: $("stateFilter")
+      };
+
+      const safe = (value) => String(value || "").trim();
+      const pct = (part, total) => total ? (part / total) * 100 : 0;
+      const format = (value) => localeNumber.format(value || 0);
+      const isFilledStatus = (value) => {
+        const text = safe(value).toUpperCase();
+        return Boolean(text) && !["0", "-", "#N/A", "00:00:00"].includes(text);
+      };
+      const countBy = (rows, key) => {
+        const result = new Map();
+        rows.forEach(row => {
+          const label = safe(row[key]) || "Não informado";
+          result.set(label, (result.get(label) || 0) + 1);
+        });
+        return [...result.entries()].sort((a, b) => b[1] - a[1]);
+      };
+
+      function fillSelect(select, key) {
+        const values = [...new Set(allRows.map(row => safe(row[key])).filter(Boolean))]
+          .sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true }));
+        select.insertAdjacentHTML("beforeend", values.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join(""));
+      }
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
+      }
+
+      function filteredRows() {
+        return allRows.filter(row => Object.entries(filters).every(([key, select]) => !select.value || safe(row[key]) === select.value));
+      }
+
+      function renderBars(target, entries, total, limit = 8) {
+        const data = entries.slice(0, limit);
+        if (!data.length) {
+          target.innerHTML = '<div class="empty">Nenhum dado para os filtros selecionados.</div>';
+          return;
+        }
+        const max = Math.max(...data.map(item => item[1]), 1);
+        target.innerHTML = data.map(([label, value]) => `
+          <div class="bar-line" title="${escapeHtml(label)}: ${format(value)}">
+            <div class="bar-label">${escapeHtml(label)}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${(value / max * 100).toFixed(1)}%"></div></div>
+            <div class="bar-value">${format(value)}</div>
+          </div>`).join("");
+      }
+
+      function renderStages(rows) {
+        const total = rows.length;
+        const stages = [
+          ["Sub Manual JSC", rows.filter(row => /JSC/i.test(safe(row.s))).length, "#0ea5e9"],
+          ["Aceito TIM", rows.filter(row => /ACEITO.*TIM|ACEITO PELA TIM/i.test(safe(row.a))).length, "#10b981"],
+          ["MOS concluído", rows.filter(row => safe(row.o).toUpperCase() === "OK").length, "#f59e0b"],
+          ["Integração concluída", rows.filter(row => safe(row.i).toUpperCase() === "OK").length, "#7c3aed"],
+          ["LR encaminhado", rows.filter(row => /EMAIL OK|COLETADO/i.test(safe(row.l))).length, "#ef4444"]
+        ];
+        $("stageList").innerHTML = stages.map(([name, count, color]) => `
+          <div class="stage" style="--stage-color:${color}">
+            <div class="stage-top"><span class="stage-name">${name}</span><span class="stage-count">${format(count)}</span></div>
+            <div class="stage-progress"><span style="width:${pct(count, total).toFixed(1)}%"></span></div>
+            <div class="stage-foot">${pct(count, total).toFixed(1).replace(".", ",")}% da seleção</div>
+          </div>`).join("");
+      }
+
+      function formatCell(value, isDate = false) {
+        const text = safe(value);
+        if (!isDate) return text;
+        if (!text || text === "00:00:00") return "";
+        const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+        if (dateMatch) return `${dateMatch[3]}/${dateMatch[2]}/${dateMatch[1]}`;
+        if (/^\d{5}$/.test(text)) {
+          const date = new Date(Date.UTC(1899, 11, 30) + Number(text) * 86400000);
+          return new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(date);
+        }
+        return text;
+      }
+
+      function renderDetailTable(rows) {
+        const columns = ["q", "p", "r", "e", "y", "f", "t", "x", "h", "v", "b", "k", "w", "g"];
+        const dateColumns = new Set(["v", "b", "w", "g"]);
+        $("detailCount").textContent = `${format(rows.length)} linhas`;
+        $("detailTable").innerHTML = rows.length
+          ? rows.map(row => `<tr>${columns.map(key => `<td>${escapeHtml(formatCell(row[key], dateColumns.has(key))) || "—"}</td>`).join("")}</tr>`).join("")
+          : `<tr><td colspan="14" class="empty">Nenhum registro para os filtros selecionados.</td></tr>`;
+      }
+
+      function renderRegionTable(rows) {
+        const total = rows.length;
+        const regions = countBy(rows, "r").filter(([region]) => region !== "Não informado");
+        $("regionTable").innerHTML = regions.length ? regions.map(([region, count]) => {
+          const regionRows = rows.filter(row => safe(row.r) === region);
+          const projects = key => regionRows.filter(row => safe(row.p).toUpperCase().includes(key)).length;
+          return `<tr><td class="region-name">${escapeHtml(region)}</td><td>${format(count)}</td><td class="share">${pct(count, total).toFixed(1).replace(".", ",")}%</td><td>${format(projects("5G"))}</td><td>${format(projects("SWAP"))}</td><td>${format(projects("4G"))}</td></tr>`;
+        }).join("") : '<tr><td colspan="6" class="empty">Nenhum dado disponível.</td></tr>';
+      }
+
+      function renderButtons() {
+        [["p", "projectButtons"], ["u", "stateButtons"]].forEach(([key, id]) => {
+          const parent = $(id);
+          parent.replaceChildren();
+          [...filters[key].options].forEach(option => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = option.textContent;
+            button.setAttribute("aria-pressed", String(filters[key].value === option.value));
+            button.addEventListener("click", () => { filters[key].value = option.value; render(); });
+            parent.append(button);
+          });
+        });
+      }
+      function render() {
+        renderButtons();
+        const rows = filteredRows();
+        const total = rows.length;
+        const states = countBy(rows, "u")
+          .filter(([state]) => state !== "Não informado")
+          .sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
+        const tssr = countBy(rows, "t")
+          .filter(([status]) => status !== "Não informado")
+          .sort((a, b) => a[0].localeCompare(b[0], "pt-BR", { numeric: true }));
+        const smr = countBy(rows, "x")
+          .filter(([status]) => status !== "Não informado")
+          .sort((a, b) => a[0].localeCompare(b[0], "pt-BR", { numeric: true }));
+
+        $("resultCount").textContent = `${format(total)} registros na seleção`;
+        const siteStages = [
+          ["MOS", rows.filter(row => isFilledStatus(row.o)).length],
+          ["INSTALADO", rows.filter(row => isFilledStatus(row.d)).length],
+          ["INTEGRADO", rows.filter(row => isFilledStatus(row.i)).length]
+        ];
+        $("kpiSitesTotal").textContent = format(total);
+        $("kpiSiteStages").innerHTML = siteStages.map(([stage, count]) => `<span class="metric-item"><span>${stage}</span><strong>${format(count)}</strong></span>`).join("");
+        $("kpiStatesTotal").textContent = format(states.length);
+        $("kpiStates").innerHTML = states.length
+          ? states.map(([state, count]) => `<span class="state-item"><span>${escapeHtml(state)}</span><strong>${format(count)}</strong></span>`).join("")
+          : '<span class="kpi-detail">Sem dados</span>';
+        $("kpiTssrTotal").textContent = format(tssr.reduce((sum, item) => sum + item[1], 0));
+        $("kpiTssr").innerHTML = tssr.length
+          ? tssr.map(([status, count]) => `<span class="metric-item" title="${escapeHtml(status)}"><span>${escapeHtml(status)}</span><strong>${format(count)}</strong></span>`).join("")
+          : '<span class="kpi-detail">Sem dados</span>';
+        $("kpiSmrTotal").textContent = format(smr.reduce((sum, item) => sum + item[1], 0));
+        $("kpiSmr").innerHTML = smr.length
+          ? smr.map(([status, count]) => `<span class="metric-item" title="${escapeHtml(status)}"><span>${escapeHtml(status)}</span><strong>${format(count)}</strong></span>`).join("")
+          : '<span class="kpi-detail">Sem dados</span>';
+
+        const projects = countBy(rows, "p");
+        $("projectBadge").textContent = `${projects.length} categorias`;
+        renderBars($("projectBars"), projects, total, 8);
+        renderBars($("stateBars"), countBy(rows, "u"), total, 8);
+        renderStages(rows);
+        renderRegionTable(rows);
+        renderDetailTable(rows);
+      }
+
+      fillSelect(filters.p, "p");
+      
+      fillSelect(filters.u, "u");
+      
+      Object.values(filters).forEach(select => select.addEventListener("change", render));
+      $("resetFilters").addEventListener("click", () => {
+        Object.values(filters).forEach(select => { select.value = ""; });
+        render();
+      });
+
+      $("sourceDate").textContent = "Base local: " + (payload.updatedAt ? new Date(payload.updatedAt).toLocaleString("pt-BR") : "não informada") + " · Coluna V contém JSC";
+      render();
+    })();
+  </script>
+</body>
+</html>
