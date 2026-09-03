@@ -276,7 +276,8 @@
       .bar-line { grid-template-columns: 95px 1fr 42px; }
       .panel { padding: 18px 16px; }
     }
-  .filters {grid-template-columns: 1.4fr 1fr auto; align-items:start;}
+  .filters {grid-template-columns: repeat(2,minmax(0,1fr)); align-items:start;}
+.filters .reset {justify-self:end;}
 .filter-buttons {display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
 .filter-buttons button {padding:10px 16px;border:1px solid #bfd0e5;border-radius:8px;background:white;color:#183b60;cursor:pointer;min-height:44px;font-size:14px;}
 .filter-buttons button[aria-pressed="true"] {background:#0066ff;border-color:#0066ff;color:white;}
@@ -307,6 +308,8 @@ label, .kpi-label, .panel-note, table, .detail-table, th, .detail-table th, .sta
       
       <div class="field"><label for="stateFilter">UF · coluna D</label><select id="stateFilter" hidden><option value="">Todas</option></select><div id="stateButtons" class="filter-buttons" role="group" aria-label="Estados"></div></div>
       
+<div class="field"><label for="targetFilter">Atalho rápido · coluna Q</label><select id="targetFilter" hidden><option value="">Todos</option></select><div id="targetButtons" class="filter-buttons" role="group" aria-label="Atalhos rápidos"></div></div>
+<div class="field"><label for="partnerFilter">Parceiro · coluna AK</label><select id="partnerFilter" hidden><option value="">Todos</option></select><div id="partnerButtons" class="filter-buttons" role="group" aria-label="Parceiros"></div></div>
       <button class="reset" id="resetFilters" type="button">Limpar filtros</button>
     </section>
 
@@ -370,7 +373,7 @@ label, .kpi-label, .panel-note, table, .detail-table, th, .detail-table th, .sta
       const filters = {
         p: $("projectFilter"),
         
-        u: $("stateFilter")
+        u: $("stateFilter"), m: $("targetFilter"), k: $("partnerFilter")
       };
 
       const safe = (value) => String(value || "").trim();
@@ -468,7 +471,7 @@ label, .kpi-label, .panel-note, table, .detail-table, th, .detail-table th, .sta
       }
 
       function renderButtons() {
-        [["p", "projectButtons"], ["u", "stateButtons"]].forEach(([key, id]) => {
+        [["p", "projectButtons"], ["u", "stateButtons"], ["m", "targetButtons"], ["k", "partnerButtons"]].forEach(([key, id]) => {
           const parent = $(id);
           parent.replaceChildren();
           [...filters[key].options].forEach(option => {
@@ -528,6 +531,8 @@ label, .kpi-label, .panel-note, table, .detail-table, th, .detail-table th, .sta
       fillSelect(filters.p, "p");
       
       fillSelect(filters.u, "u");
+      fillSelect(filters.m, "m");
+      fillSelect(filters.k, "k");
       
       Object.values(filters).forEach(select => select.addEventListener("change", render));
       $("resetFilters").addEventListener("click", () => {
