@@ -287,6 +287,7 @@ label, .kpi-label, .panel-note, table, .detail-table, th, .detail-table th, .sta
 .topbar-inner {min-height:140px;}
 @media(max-width:780px){.filters{grid-template-columns:1fr}.topbar-inner{min-height:170px}}
 .weekly-card h2{font-size:16px;margin:0 0 6px}.weekly-table{overflow:auto;max-height:310px;margin-top:12px}.weekly-table table{font-size:14px}.weekly-table th,.weekly-table td{padding:8px;text-align:center;letter-spacing:0;text-transform:none}.weekly-table th:first-child{text-align:left}.weekly-table thead th{position:sticky;top:0;background:#f7f9fc}.weekly-table p{font-size:14px;color:#66788f}
+@media(max-width:780px){.partner-field{display:none;}}
 </style>
 </head>
 <body>
@@ -310,7 +311,7 @@ label, .kpi-label, .panel-note, table, .detail-table, th, .detail-table th, .sta
       <div class="field"><label for="stateFilter">UF · coluna D</label><select id="stateFilter" hidden><option value="">Todas</option></select><div id="stateButtons" class="filter-buttons" role="group" aria-label="Estados"></div></div>
       
 <div class="field"><label for="targetFilter">Atalho rápido · coluna Q</label><select id="targetFilter" hidden><option value="">Todos</option></select><div id="targetButtons" class="filter-buttons" role="group" aria-label="Atalhos rápidos"></div></div>
-<div class="field"><label for="partnerFilter">Parceiro · coluna AK</label><select id="partnerFilter" hidden><option value="">Todos</option></select><div id="partnerButtons" class="filter-buttons" role="group" aria-label="Parceiros"></div></div>
+<div class="field partner-field"><label for="partnerFilter">Parceiro · coluna AK</label><select id="partnerFilter" hidden><option value="">Todos</option></select><div id="partnerButtons" class="filter-buttons" role="group" aria-label="Parceiros"></div></div>
       <button class="reset" id="resetFilters" type="button">Limpar filtros</button>
     </section>
 
